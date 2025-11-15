@@ -1,0 +1,30 @@
+.navbar {
+  background-color: #222;
+  padding: 20px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.navbar-left {
+  display: flex;
+}
+
+.navbar-right {
+  display: flex;
+  gap: 15px;
+}
+
+.navbar-link {
+  color: white;
+  text-decoration: none;
+  margin-right: 20px;
+}
+
+.navbar-link:hover {
+  color: #ccc;
+}
+
+.navbar-link:last-child {
+  margin-right: 0;
+}
