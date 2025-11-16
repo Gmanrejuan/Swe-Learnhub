@@ -6,8 +6,8 @@ import Home from "./pages/Home/home";
 import Interview from "./pages/Interview";
 import Question from "./pages/Question";
 import Write from "./pages/Write";
-import Signin from "./pages/Signin";
-import Signup from "./pages/Signup";
+import Signin from "./pages/Signin/signin";
+import Signup from "./pages/Signup/Signup";
 
 function App() {
   return (
