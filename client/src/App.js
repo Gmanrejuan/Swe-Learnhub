@@ -3,11 +3,12 @@ import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
 import Navbar from "./components/Navbar/Navbar";
 import Footer from "./components/Footer/Footer";
 import Home from "./pages/Home/home";
-import Interview from "./pages/Interview";
-import Question from "./pages/Question";
-import Write from "./pages/Write";
+import Interview from "./pages/Interview/interview"
+import Question from "./pages/Question/question";
+import Write from "./pages/Write/write";
 import Signin from "./pages/Signin/signin";
 import Signup from "./pages/Signup/Signup";
+import Profile from "./pages/Profile/profile";
 
 function App() {
   return (
@@ -21,6 +22,7 @@ function App() {
           <Route path="/write" element={<Write />} />
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
+          <Route path="/profile" element={<Profile />} />
         </Routes>
       </div>
       <Footer />
