@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import "./signin.css";
 
 function SignIn() {
@@ -7,18 +7,59 @@ function SignIn() {
     email: "",
     password: ""
   });
+  
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const navigate = useNavigate();
 
   const handleChange = (e) => {
     setFormData({
       ...formData,
       [e.target.name]: e.target.value
     });
+    // Clear error when user starts typing
+    if (error) setError("");
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle sign in logic here
-    console.log("Sign in attempt:", formData);
+    setLoading(true);
+    setError("");
+
+    console.log(formData);
+
+    try {
+      const response = await fetch('http://localhost:8000/api/auth/login', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          email: formData.email,
+          password: formData.password
+        })
+      });
+
+      const data = await response.json();
+
+      if (response.ok && data.success) {
+        // Store token in localStorage
+        localStorage.setItem('token', data.token);
+        localStorage.setItem('user', JSON.stringify(data.user));
+        
+        console.log('Login successful:', data);
+        
+        // Redirect to home page
+        navigate('/');
+      } else {
+        setError(data.message || 'Login failed');
+      }
+    } catch (error) {
+      console.error('Login error:', error);
+      setError('Network error. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -26,6 +67,12 @@ function SignIn() {
       <div className="signin-box">
         <h1>Welcome Back</h1>
         <p>Sign in to your account</p>
+        
+        {error && (
+          <div className="error-message">
+            {error}
+          </div>
+        )}
         
         <form onSubmit={handleSubmit} className="signin-form">
           <div className="form-group">
@@ -38,6 +85,7 @@ function SignIn() {
               onChange={handleChange}
               placeholder="Enter your email"
               required
+              disabled={loading}
             />
           </div>
 
@@ -51,6 +99,7 @@ function SignIn() {
               onChange={handleChange}
               placeholder="Enter your password"
               required
+              disabled={loading}
             />
           </div>
 
@@ -64,8 +113,12 @@ function SignIn() {
             </Link>
           </div>
 
-          <button type="submit" className="signin-button">
-            Sign In
+          <button 
+            type="submit" 
+            className="signin-button"
+            disabled={loading}
+          >
+            {loading ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

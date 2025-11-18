@@ -4,9 +4,14 @@ import "./signup.css";
 
 function Signup() {
   const [formData, setFormData] = useState({
+    firstName: "",
+    lastName: "",
     email: "",
     password: "", 
-    repassword: ""
+    repassword: "",
+    university: "",
+    degree: "",
+    major: ""
   });
 
   const handleChange = (e) => {
@@ -16,10 +21,50 @@ function Signup() {
     });
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    // Handle sign up logic here
-    console.log("Sign up attempt:", formData);
+    
+    // Validate passwords match
+    if (formData.password !== formData.repassword) {
+      alert("Passwords do not match!");
+      return;
+    }
+
+    console.log(formData)
+
+     try {
+      const response = await fetch('http://localhost:8000/api/auth/register', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          firstName: formData.firstName,
+          lastName: formData.lastName,
+          email: formData.email,
+          password: formData.password,
+          university: formData.university,
+          degree: formData.degree,
+          major: formData.major
+        }),
+      });
+
+      const data = await response.json();
+
+      console.log(response);
+      
+
+      if (response.ok) {
+        alert("Account created successfully!");
+        // Redirect to sign in page or dashboard
+        window.location.href = '/signin';
+      } else {
+        alert(data.message || "Error creating account");
+      }
+    } catch (error) {
+      console.error("Error:", error);
+      alert("Network error. Please try again.");
+    }
   };
 
   return (

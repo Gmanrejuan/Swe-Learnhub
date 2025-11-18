@@ -27,9 +27,9 @@ app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
-app.use('/api/questions', questionRoutes);
-app.use('/api/interviews', interviewRoutes);
-app.use('/api/users', userRoutes);
+// app.use('/api/questions', questionRoutes);
+// app.use('/api/interviews', interviewRoutes);
+// app.use('/api/users', userRoutes);
 
 // Health check
 app.get('/api/health', (req, res) => {
@@ -45,10 +45,10 @@ app.use((err, req, res, next) => {
     });
 });
 
-// 404 handler
-app.use('*', (req, res) => {
-    res.status(404).json({ message: 'Route not found' });
-});
+// // 404 handler
+// app.use('*', (req, res) => {
+//     res.status(404).json({ message: 'Route not found' });
+// });
 
 const PORT = process.env.PORT || 5000;
 

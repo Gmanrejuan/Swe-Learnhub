@@ -1,6 +1,7 @@
-const API_BASE_URL = 'http://localhost:5000/api';
+const API_BASE_URL = 'http://localhost:8000/api';
 
 // Auth API calls
+// Add this to your existing api.js
 export const authAPI = {
     login: async (email, password) => {
         const response = await fetch(`${API_BASE_URL}/auth/login`, {
@@ -8,7 +9,8 @@ export const authAPI = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({ email, password })
         });
-        return response.json();
+        const data = await response.json();
+        return { ...data, ok: response.ok };
     },
     
     register: async (userData) => {
@@ -17,7 +19,8 @@ export const authAPI = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
-        return response.json();
+        const data = await response.json();
+        return { ...data, ok: response.ok };
     }
 };
 
