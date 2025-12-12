@@ -6,6 +6,10 @@ import { FiEdit } from 'react-icons/fi';
 import { MdOutlineQuestionMark } from 'react-icons/md';
 import { CgProfile } from 'react-icons/cg';
 import { HiBriefcase } from 'react-icons/hi';
+import SideBar from '../../components/SideBar/sideBar';
+import { useNavigate } from 'react-router-dom';
+import { questionsAPI, interviewsAPI } from '../../services/api';
+
 
 const Write = () => {
   const [postType, setPostType] = useState('question'); // 'question' or 'interview'
@@ -32,11 +36,90 @@ const Write = () => {
     });
   };
 
-  const handleSubmit = (e) => {
+const handleSubmit = async (e) => {
     e.preventDefault();
-    console.log('Submitting:', { type: postType, data: formData });
-    // Handle form submission here
-  };
+    
+    try {
+        // Validate required fields
+        if (!formData.title || !formData.content) {
+            alert('Please fill in all required fields');
+            return;
+        }
+
+        // Get token from localStorage
+        const token = localStorage.getItem('token');
+        if (!token) {
+            alert('Please login to post content');
+            return;
+        }
+
+        let result;
+
+        if (postType === 'question') {
+            // Validate question-specific fields
+            if (!formData.semester || !formData.year || !formData.topic) {
+                alert('Please fill in all required fields for question');
+                return;
+            }
+
+            const questionData = {
+                title: formData.title,
+                content: formData.content,
+                semester: formData.semester,
+                year: formData.year,
+                topic: formData.topic
+            };
+
+            result = await questionsAPI.createQuestion(questionData, token);
+        } else {
+            // Validate interview-specific fields
+            if (!formData.company || !formData.position || !formData.interviewDate || !formData.location || !formData.result) {
+                alert('Please fill in all required fields for interview experience');
+                return;
+            }
+
+            const interviewData = {
+                title: formData.title,
+                content: formData.content,
+                company: formData.company,
+                position: formData.position,
+                interviewDate: formData.interviewDate,
+                location: formData.location,
+                result: formData.result,
+                tags: formData.tags
+            };
+
+            result = await interviewsAPI.createInterview(interviewData, token);
+        }
+
+        if (result.success) {
+            alert(`${postType === 'question' ? 'Question' : 'Interview experience'} submitted successfully!`);
+            
+            // Reset form
+            setFormData({
+                title: '',
+                content: '',
+                semester: '',
+                year: '',
+                topic: '',
+                company: '',
+                position: '',
+                interviewDate: '',
+                location: '',
+                result: '',
+                tags: ''
+            });
+            
+            // Optionally redirect to home or the new post
+            // navigate('/');
+        } else {
+            alert(result.message || 'Failed to submit post');
+        }
+    } catch (error) {
+        console.error('Submission error:', error);
+        alert('Failed to submit post. Please try again.');
+    }
+};
 
   const insertFormatting = (format) => {
     const textarea = document.getElementById('content-editor');
@@ -77,38 +160,8 @@ const Write = () => {
 
   return (
     <div className="write-layout">
-      {/* Fixed Left Sidebar */}
-      <aside className="sidebar-left">
-        <nav className="navigation-menu">
-          <ul className="nav-list">
-            <li className="nav-item">
-              <Link to="/" className="nav-link">
-                <FaHome className="nav-icon" /> Home
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/interview" className="nav-link">
-                <HiBriefcase className="nav-icon" /> Interview
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/question" className="nav-link">
-                <MdOutlineQuestionMark className="nav-icon" /> Questions
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/write" className="nav-link nav-link--active">
-                <FiEdit className="nav-icon" /> Write
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/profile" className="nav-link">
-                <CgProfile className="nav-icon" /> Profile
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+      
+      <SideBar/>
 
       {/* Main Content Area */}
       <main className="main-content">

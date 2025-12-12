@@ -6,6 +6,7 @@ import { FiEdit } from 'react-icons/fi';
 import { MdOutlineQuestionMark } from 'react-icons/md';
 import { CgProfile } from 'react-icons/cg';
 import { HiBriefcase } from 'react-icons/hi';
+import SideBar from '../../components/SideBar/sideBar';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
@@ -94,38 +95,8 @@ const Profile = () => {
 
   return (
     <div className="profile-layout">
-      {/* Fixed Left Sidebar */}
-      <aside className="sidebar-left">
-        <nav className="navigation-menu">
-          <ul className="nav-list">
-            <li className="nav-item">
-              <Link to="/" className="nav-link">
-                <FaHome className="nav-icon" /> Home
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/interview" className="nav-link">
-                <HiBriefcase className="nav-icon" /> Interview
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/question" className="nav-link">
-                <MdOutlineQuestionMark className="nav-icon" /> Questions
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/write" className="nav-link">
-                <FiEdit className="nav-icon" /> Write
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/profile" className="nav-link nav-link--active">
-                <CgProfile className="nav-icon" /> Profile
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+      
+      <SideBar/>
 
       {/* Main Content */}
       <main className="main-content">

@@ -1,174 +1,257 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import "./interview.css"
 import { Link } from "react-router-dom";
-import { FaHome } from "react-icons/fa";
-import { FiEdit } from "react-icons/fi";
-import { MdOutlineQuestionMark } from "react-icons/md";
-import { CgProfile } from "react-icons/cg";
-import { HiBriefcase } from "react-icons/hi";
 import { BsCalendarDate } from "react-icons/bs";
 import { AiFillLike } from "react-icons/ai";
-import { FaComment } from "react-icons/fa";
-import { FaBuilding } from "react-icons/fa";
+import { FaComment, FaBuilding } from "react-icons/fa";
+import SideBar from '../../components/SideBar/sideBar';
+import { interviewsAPI } from '../../services/api';
 
 function Interview() {
+  const [interviews, setInterviews] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [selectedCompany, setSelectedCompany] = useState('');
+  const [selectedResult, setSelectedResult] = useState('');
+
+  // Fetch data when component mounts
+  useEffect(() => {
+    fetchInterviews();
+  }, [selectedCompany, selectedResult]);
+
+  const fetchInterviews = async () => {
+    try {
+      setLoading(true);
+      
+      const filters = {};
+      if (selectedCompany) filters.company = selectedCompany;
+      if (selectedResult) filters.result = selectedResult;
+
+      const response = await interviewsAPI.getInterviews(filters);
+
+      if (response.success) {
+        setInterviews(response.data);
+      } else {
+        setError('Failed to fetch interviews');
+      }
+    } catch (error) {
+      console.error('Error fetching interviews:', error);
+      setError('Failed to load interview experiences. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  // Format date helper
+  const formatDate = (dateString) => {
+    const date = new Date(dateString);
+    return date.toLocaleDateString('en-GB', {
+      day: '2-digit',
+      month: '2-digit',
+      year: '2-digit'
+    });
+  };
+
+  // Get unique companies for filter
+  const getUniqueCompanies = () => {
+    const companies = interviews.map(interview => interview.company);
+    return [...new Set(companies)];
+  };
+
+  // Handle company filter
+  const handleCompanyFilter = (company) => {
+    setSelectedCompany(company === selectedCompany ? '' : company);
+  };
+
+  // Get result badge style
+  const getResultBadgeStyle = (result) => {
+    const styles = {
+      'Selected': { backgroundColor: '#10B981', color: 'white' },
+      'Rejected': { backgroundColor: '#EF4444', color: 'white' },
+      'Waiting': { backgroundColor: '#F59E0B', color: 'white' },
+      'Withdrew': { backgroundColor: '#6B7280', color: 'white' }
+    };
+    return styles[result] || { backgroundColor: '#E5E7EB', color: '#374151' };
+  };
+
+  if (loading) {
+    return (
+      <div className="interview-layout">
+        <SideBar/>
+        <main className="main-content">
+          <div className="content-feed">
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <h2>Loading interview experiences...</h2>
+              <p>Please wait while we fetch the latest content</p>
+            </div>
+          </div>
+        </main>
+        <aside className="sidebar-right"></aside>
+      </div>
+    );
+  }
+
+  if (error) {
+    return (
+      <div className="interview-layout">
+        <SideBar/>
+        <main className="main-content">
+          <div className="content-feed">
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <h2>Error</h2>
+              <p style={{ color: 'red' }}>{error}</p>
+              <button 
+                onClick={fetchInterviews}
+                style={{ 
+                  padding: '10px 20px', 
+                  marginTop: '20px',
+                  backgroundColor: '#1877f2',
+                  color: 'white',
+                  border: 'none',
+                  borderRadius: '5px',
+                  cursor: 'pointer'
+                }}
+              >
+                Retry
+              </button>
+            </div>
+          </div>
+        </main>
+        <aside className="sidebar-right"></aside>
+      </div>
+    );
+  }
+
   return (
     <div className="interview-layout">
-      {/* Fixed Left Sidebar */}
-      <aside className="sidebar-left">
-        <nav className="navigation-menu">
-          <ul className="nav-list">
-            <li className="nav-item">
-              <Link to="/" className="nav-link">
-                <FaHome className="nav-icon" /> Home
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/interview" className="nav-link nav-link--active">
-                <HiBriefcase className="nav-icon" /> Interview
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/question" className="nav-link">
-                <MdOutlineQuestionMark className="nav-icon" /> Questions
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/write" className="nav-link">
-                <FiEdit className="nav-icon" /> Write
-              </Link>
-            </li>
-            <li className="nav-item">
-              <Link to="/profile" className="nav-link">
-                <CgProfile className="nav-icon" /> Profile
-              </Link>
-            </li>
-          </ul>
-        </nav>
-      </aside>
+      <SideBar/>
       
       {/* Scrollable Main Content */}
       <main className="main-content">
         <div className="content-feed">
-          <article className="interview-card">
-            <div className="card-content">
-              <div className="card-meta">
-                <Link to="#" className="meta-category">Interview Experience</Link> 
-                <span className="meta-separator">by</span> 
-                <Link to="#" className="meta-author">Sarah Johnson</Link>
-              </div>
-              <h2 className="card-title">My Google Software Engineer Interview Journey</h2>
-              <p className="card-excerpt">Sharing my complete experience from application to offer. Covers technical rounds, behavioral questions, and preparation strategies that helped me land the role.</p>
+          <div className="filter-bar" style={{ marginBottom: '20px', padding: '20px', backgroundColor: '#f8f9fa', borderRadius: '8px' }}>
+            <h3>Filter by Result:</h3>
+            <div style={{ display: 'flex', gap: '10px', marginTop: '10px' }}>
+              {['Selected', 'Rejected', 'Waiting', 'Withdrew'].map(result => (
+                <button
+                  key={result}
+                  onClick={() => setSelectedResult(result === selectedResult ? '' : result)}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    backgroundColor: result === selectedResult ? '#1877f2' : 'white',
+                    color: result === selectedResult ? 'white' : '#333',
+                    cursor: 'pointer'
+                  }}
+                >
+                  {result}
+                </button>
+              ))}
+              {selectedResult && (
+                <button
+                  onClick={() => setSelectedResult('')}
+                  style={{
+                    padding: '8px 16px',
+                    border: '1px solid #ddd',
+                    borderRadius: '5px',
+                    backgroundColor: '#f8f9fa',
+                    color: '#666',
+                    cursor: 'pointer'
+                  }}
+                >
+                  Clear Filter
+                </button>
+              )}
+            </div>
+          </div>
 
-              <div className="card-stats">
-                <span className="stat-item">
-                  <BsCalendarDate className="stat-icon" /> 15/11/25
-                </span>
-                <span className="stat-item">
-                  <FaBuilding className="stat-icon" /> Google
-                </span>
-                <span className="stat-item">
-                  <AiFillLike className="stat-icon" /> 2,847
-                </span>
-                <span className="stat-item">
-                  <FaComment className="stat-icon" /> 342
-                </span>
-              </div>
+          {interviews.length === 0 ? (
+            <div style={{ textAlign: 'center', padding: '50px' }}>
+              <h3>No interview experiences found</h3>
+              <p>Be the first to share your interview experience!</p>
+              <Link 
+                to="/write" 
+                style={{ 
+                  display: 'inline-block', 
+                  marginTop: '20px', 
+                  padding: '10px 20px', 
+                  backgroundColor: '#1877f2', 
+                  color: 'white', 
+                  textDecoration: 'none', 
+                  borderRadius: '5px' 
+                }}
+              >
+                Share Your Experience
+              </Link>
             </div>
-            <div className="card-image">
-              <img src="../../resource/image.png" alt="Google interview experience" />
-            </div>
-          </article>
+          ) : (
+            interviews.map((interview) => (
+              <article key={interview.id} className="interview-card">
+                <div className="card-content">
+                  <div className="card-meta">
+                    <Link to="#" className="meta-category">Interview Experience</Link> 
+                    <span className="meta-separator">by</span> 
+                    <Link to="#" className="meta-author">
+                      {interview.first_name} {interview.last_name}
+                    </Link>
+                    <span 
+                      className="result-badge"
+                      style={{
+                        ...getResultBadgeStyle(interview.result),
+                        padding: '4px 8px',
+                        borderRadius: '12px',
+                        fontSize: '12px',
+                        fontWeight: '500',
+                        marginLeft: '10px'
+                      }}
+                    >
+                      {interview.result}
+                    </span>
+                  </div>
+                  <h2 className="card-title">{interview.title}</h2>
+                  <p className="card-excerpt">
+                    {interview.content.length > 200 
+                      ? `${interview.content.substring(0, 200)}...` 
+                      : interview.content}
+                  </p>
 
-          <article className="interview-card">
-            <div className="card-content">
-              <div className="card-meta">
-                <Link to="#" className="meta-category">Interview Experience</Link> 
-                <span className="meta-separator">by</span> 
-                <Link to="#" className="meta-author">Mike Chen</Link>
-              </div>
-              <h2 className="card-title">Microsoft Frontend Developer Interview - What to Expect</h2>
-              <p className="card-excerpt">Detailed breakdown of my Microsoft interview process including coding challenges, system design, and tips for acing the behavioral rounds.</p>
+                  <div className="interview-details" style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>
+                    <span><strong>Position:</strong> {interview.position}</span>
+                    <span style={{ margin: '0 10px' }}>|</span>
+                    <span><strong>Location:</strong> {interview.location_type}</span>
+                    {interview.tags && (
+                      <>
+                        <span style={{ margin: '0 10px' }}>|</span>
+                        <span><strong>Tags:</strong> {interview.tags}</span>
+                      </>
+                    )}
+                  </div>
 
-              <div className="card-stats">
-                <span className="stat-item">
-                  <BsCalendarDate className="stat-icon" /> 12/11/25
-                </span>
-                <span className="stat-item">
-                  <FaBuilding className="stat-icon" /> Microsoft
-                </span>
-                <span className="stat-item">
-                  <AiFillLike className="stat-icon" /> 1,923
-                </span>
-                <span className="stat-item">
-                  <FaComment className="stat-icon" /> 187
-                </span>
-              </div>
-            </div>
-            <div className="card-image">
-              <img src="../../resource/image.png" alt="Microsoft interview experience" />
-            </div>
-          </article>
-
-          <article className="interview-card">
-            <div className="card-content">
-              <div className="card-meta">
-                <Link to="#" className="meta-category">Interview Experience</Link> 
-                <span className="meta-separator">by</span> 
-                <Link to="#" className="meta-author">Priya Sharma</Link>
-              </div>
-              <h2 className="card-title">Amazon SDE Interview: From Rejection to Success</h2>
-              <p className="card-excerpt">How I failed my first Amazon interview, learned from mistakes, and successfully cleared it in my second attempt. Includes practice resources and timeline.</p>
-
-              <div className="card-stats">
-                <span className="stat-item">
-                  <BsCalendarDate className="stat-icon" /> 10/11/25
-                </span>
-                <span className="stat-item">
-                  <FaBuilding className="stat-icon" /> Amazon
-                </span>
-                <span className="stat-item">
-                  <AiFillLike className="stat-icon" /> 4,156
-                </span>
-                <span className="stat-item">
-                  <FaComment className="stat-icon" /> 528
-                </span>
-              </div>
-            </div>
-            <div className="card-image">
-              <img src="../../resource/image.png" alt="Amazon interview experience" />
-            </div>
-          </article>
-
-          <article className="interview-card">
-            <div className="card-content">
-              <div className="card-meta">
-                <Link to="#" className="meta-category">Interview Experience</Link> 
-                <span className="meta-separator">by</span> 
-                <Link to="#" className="meta-author">David Wilson</Link>
-              </div>
-              <h2 className="card-title">Meta (Facebook) Backend Engineer Interview Experience</h2>
-              <p className="card-excerpt">Complete walkthrough of Meta's interview process for backend engineers. System design questions, coding rounds, and cultural fit discussions covered.</p>
-
-              <div className="card-stats">
-                <span className="stat-item">
-                  <BsCalendarDate className="stat-icon" /> 08/11/25
-                </span>
-                <span className="stat-item">
-                  <FaBuilding className="stat-icon" /> Meta
-                </span>
-                <span className="stat-item">
-                  <AiFillLike className="stat-icon" /> 3,291
-                </span>
-                <span className="stat-item">
-                  <FaComment className="stat-icon" /> 425
-                </span>
-              </div>
-            </div>
-            <div className="card-image">
-              <img src="../../resource/image.png" alt="Meta interview experience" />
-            </div>
-          </article>
+                  <div className="card-stats">
+                    <span className="stat-item">
+                      <BsCalendarDate className="stat-icon" /> {formatDate(interview.created_at)}
+                    </span>
+                    <span className="stat-item">
+                      <FaBuilding className="stat-icon" /> {interview.company}
+                    </span>
+                    <span className="stat-item">
+                      <AiFillLike className="stat-icon" /> {interview.likes}
+                    </span>
+                    <span className="stat-item">
+                      <FaComment className="stat-icon" /> {interview.comment_count}
+                    </span>
+                  </div>
+                </div>
+                <div className="card-image">
+                  <img 
+                    src={`https://via.placeholder.com/300x200/1877f2/ffffff?text=${encodeURIComponent(interview.company)}`}
+                    alt={`${interview.company} interview experience`} 
+                  />
+                </div>
+              </article>
+            ))
+          )}
         </div>
       </main>
 
@@ -177,63 +260,71 @@ function Interview() {
         <section className="widget">
           <h3 className="widget-title">Popular Companies</h3>
           <div className="company-tags">
-            <button className="company-tag">Google</button>
-            <button className="company-tag">Microsoft</button>
-            <button className="company-tag">Amazon</button>
-            <button className="company-tag">Meta</button>
-            <button className="company-tag">Apple</button>
-            <button className="company-tag">Netflix</button>
-            <button className="company-tag">Uber</button>
-            <button className="company-tag">Airbnb</button>
-            <button className="company-tag">Tesla</button>
-            <button className="company-tag">Spotify</button>
+            {getUniqueCompanies().slice(0, 10).map((company) => (
+              <button 
+                key={company}
+                className="company-tag"
+                onClick={() => handleCompanyFilter(company)}
+                style={{
+                  backgroundColor: company === selectedCompany ? '#1877f2' : '#f1f3f4',
+                  color: company === selectedCompany ? 'white' : '#333',
+                  border: '1px solid #ddd',
+                  padding: '8px 12px',
+                  borderRadius: '20px',
+                  margin: '4px',
+                  cursor: 'pointer',
+                  fontSize: '12px'
+                }}
+              >
+                {company}
+              </button>
+            ))}
           </div>
         </section>
 
         <section className="widget">
-          <h3 className="widget-title">Trending This Week</h3>
+          <h3 className="widget-title">Recent Interviews</h3>
           <div className="trending-list">
-            <article className="trending-item">
-              <span className="trending-label">Hot</span>
-              <h4 className="trending-title">Goldman Sachs Technical Interview</h4>
-              <p className="trending-excerpt">Investment banking technology division interview experience</p>
-              <span className="trending-meta">3 days ago • Goldman Sachs</span>
-            </article>
-            
-            <article className="trending-item">
-              <span className="trending-label">New</span>
-              <h4 className="trending-title">Stripe Payment Engineer Interview</h4>
-              <p className="trending-excerpt">Backend engineering role interview breakdown</p>
-              <span className="trending-meta">5 days ago • Stripe</span>
-            </article>
+            {interviews.slice(0, 5).map((interview) => (
+              <article key={`recent-${interview.id}`} className="trending-item">
+                <span 
+                  className="trending-label"
+                  style={getResultBadgeStyle(interview.result)}
+                >
+                  {interview.result}
+                </span>
+                <h4 className="trending-title">{interview.title}</h4>
+                <p className="trending-excerpt">
+                  {interview.position} at {interview.company}
+                </p>
+                <span className="trending-meta">
+                  {formatDate(interview.created_at)} • {interview.company}
+                </span>
+              </article>
+            ))}
+          </div>
+        </section>
 
-            <article className="trending-item">
-              <span className="trending-label">New</span>
-              <h4 className="trending-title">Stripe Payment Engineer Interview</h4>
-              <p className="trending-excerpt">Backend engineering role interview breakdown</p>
-              <span className="trending-meta">5 days ago • Stripe</span>
-            </article>
-
-            <article className="trending-item">
-              <span className="trending-label">New</span>
-              <h4 className="trending-title">Stripe Payment Engineer Interview</h4>
-              <p className="trending-excerpt">Backend engineering role interview breakdown</p>
-              <span className="trending-meta">5 days ago • Stripe</span>
-            </article>
-
-            <article className="trending-item">
-              <span className="trending-label">New</span>
-              <h4 className="trending-title">Stripe Payment Engineer Interview</h4>
-              <p className="trending-excerpt">Backend engineering role interview breakdown</p>
-              <span className="trending-meta">5 days ago • Stripe</span>
-            </article>
-            
-            <article className="trending-item">
-              <span className="trending-label">Popular</span>
-              <h4 className="trending-title">Adobe Creative Cloud Team Interview</h4>
-              <p className="trending-excerpt">Full-stack developer position interview journey</p>
-              <span className="trending-meta">1 week ago • Adobe</span>
-            </article>
+        <section className="widget">
+          <h3 className="widget-title">Success Stories</h3>
+          <div className="trending-list">
+            {interviews
+              .filter(interview => interview.result === 'Selected')
+              .slice(0, 3)
+              .map((interview) => (
+                <article key={`success-${interview.id}`} className="trending-item">
+                  <span className="trending-label" style={{ backgroundColor: '#10B981', color: 'white' }}>
+                    Success
+                  </span>
+                  <h4 className="trending-title">{interview.title}</h4>
+                  <p className="trending-excerpt">
+                    Successfully landed {interview.position} role
+                  </p>
+                  <span className="trending-meta">
+                    {formatDate(interview.created_at)} • {interview.company}
+                  </span>
+                </article>
+              ))}
           </div>
         </section>
       </aside>

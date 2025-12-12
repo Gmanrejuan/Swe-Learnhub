@@ -19,8 +19,8 @@ export const authAPI = {
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify(userData)
         });
-        const data = await response.json();
-        return { ...data, ok: response.ok };
+        // const data = await response.json();
+        // return { ...data, ok: response.ok };
     }
 };
 
@@ -62,6 +62,22 @@ export const interviewsAPI = {
             },
             body: JSON.stringify(interviewData)
         });
+        return response.json();
+    }
+};
+
+// Add this to your api.js
+export const feedAPI = {
+    getHomeFeed: async (page = 1, limit = 10) => {
+        const response = await fetch(`${API_BASE_URL}/questions/feed?page=${page}&limit=${limit}`);
+        return response.json();
+    }
+};
+
+// Also add stats API
+export const statsAPI = {
+    getCommunityStats: async () => {
+        const response = await fetch(`${API_BASE_URL}/stats`);
         return response.json();
     }
 };

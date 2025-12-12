@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 const path = require('path');
+const statsRoutes = require('./routes/stats');
 require('dotenv').config();
 
 const authRoutes = require('./routes/auth');
@@ -21,14 +22,15 @@ app.use(cors({
 }));
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true }));
+app.use('/api/stats', statsRoutes);
 
 // Static files
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // Routes
 app.use('/api/auth', authRoutes);
-// app.use('/api/questions', questionRoutes);
-// app.use('/api/interviews', interviewRoutes);
+app.use('/api/questions', questionRoutes);
+app.use('/api/interviews', interviewRoutes);
 // app.use('/api/users', userRoutes);
 
 // Health check
