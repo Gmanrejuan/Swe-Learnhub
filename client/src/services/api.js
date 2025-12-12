@@ -81,3 +81,47 @@ export const statsAPI = {
         return response.json();
     }
 };
+
+// Add this to your existing api.js
+export const userAPI = {
+    getProfile: async () => {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('No token found');
+        
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.json();
+    },
+    
+    updateProfile: async (profileData) => {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('No token found');
+        
+        const response = await fetch(`${API_BASE_URL}/users/profile`, {
+            method: 'PUT',
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(profileData)
+        });
+        return response.json();
+    },
+    
+    getUserPosts: async () => {
+        const token = localStorage.getItem('token');
+        if (!token) throw new Error('No token found');
+        
+        const response = await fetch(`${API_BASE_URL}/users/posts`, {
+            headers: {
+                'Authorization': `Bearer ${token}`,
+                'Content-Type': 'application/json'
+            }
+        });
+        return response.json();
+    }
+};

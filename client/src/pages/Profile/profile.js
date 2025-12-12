@@ -1,5 +1,5 @@
-import React, { useState } from 'react';
-import { Link } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { Link, useNavigate } from 'react-router-dom';
 import './profile.css';
 import { FaHome, FaEdit, FaCamera, FaGraduationCap, FaMapMarkerAlt, FaCalendarAlt, FaEnvelope, FaPhone, FaLinkedin, FaGithub, FaSave, FaTimes } from 'react-icons/fa';
 import { FiEdit } from 'react-icons/fi';
@@ -7,31 +7,93 @@ import { MdOutlineQuestionMark } from 'react-icons/md';
 import { CgProfile } from 'react-icons/cg';
 import { HiBriefcase } from 'react-icons/hi';
 import SideBar from '../../components/SideBar/sideBar';
+import { userAPI } from '../../services/api';
 
 const Profile = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [activeTab, setActiveTab] = useState('about');
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState('');
+  const [saving, setSaving] = useState(false);
+  const navigate = useNavigate();
   
   const [profileData, setProfileData] = useState({
-    firstName: 'John',
-    lastName: 'Doe',
-    email: 'john.doe@university.edu',
-    phone: '+1 (555) 123-4567',
-    bio: 'Computer Science student passionate about software engineering and web development. Always eager to learn new technologies and collaborate on interesting projects.',
-    university: 'ABC University',
-    degree: 'Bachelor of Technology',
-    major: 'Computer Science',
-    currentSemester: '3/2',
-    graduationYear: '2025',
-    location: 'New York, USA',
-    dateOfBirth: '1998-05-15',
-    linkedin: 'linkedin.com/in/johndoe',
-    github: 'github.com/johndoe',
-    skills: ['JavaScript', 'React', 'Node.js', 'Python', 'Java', 'SQL'],
-    interests: ['Web Development', 'Machine Learning', 'Open Source', 'Competitive Programming']
+    firstName: '',
+    lastName: '',
+    email: '',
+    phone: '',
+    bio: '',
+    university: '',
+    degree: '',
+    major: '',
+    currentSemester: '',
+    graduationYear: '',
+    location: '',
+    dateOfBirth: '',
+    linkedin: '',
+    github: '',
+    skills: [],
+    interests: []
   });
 
   const [editData, setEditData] = useState({...profileData});
+
+  // Fetch user profile on component mount
+  useEffect(() => {
+    fetchProfile();
+  }, []);
+
+  const fetchProfile = async () => {
+    try {
+      setLoading(true);
+      const token = localStorage.getItem('token');
+      
+      if (!token) {
+        navigate('/signin');
+        return;
+      }
+
+      const response = await userAPI.getProfile();
+      
+      if (response.success) {
+        const userData = response.data;
+        
+        // Map database fields to component state
+        const profileInfo = {
+          firstName: userData.first_name || '',
+          lastName: userData.last_name || '',
+          email: userData.email || '',
+          phone: userData.phone || '',
+          bio: userData.bio || '',
+          university: userData.university || '',
+          degree: userData.degree || '',
+          major: userData.major || '',
+          currentSemester: userData.current_semester || '',
+          graduationYear: userData.graduation_year || '',
+          location: userData.location || '',
+          dateOfBirth: userData.date_of_birth || '',
+          linkedin: userData.linkedin || '',
+          github: userData.github || '',
+          skills: userData.skills || [],
+          interests: userData.interests || []
+        };
+        
+        setProfileData(profileInfo);
+        setEditData(profileInfo);
+      } else {
+        setError('Failed to load profile');
+      }
+    } catch (error) {
+      console.error('Error fetching profile:', error);
+      if (error.message === 'No token found') {
+        navigate('/signin');
+      } else {
+        setError('Failed to load profile. Please try again.');
+      }
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleInputChange = (e) => {
     const { name, value } = e.target;
@@ -42,7 +104,7 @@ const Profile = () => {
   };
 
   const handleSkillsChange = (e) => {
-    const skills = e.target.value.split(',').map(skill => skill.trim());
+    const skills = e.target.value.split(',').map(skill => skill.trim()).filter(skill => skill);
     setEditData({
       ...editData,
       skills: skills
@@ -50,21 +112,58 @@ const Profile = () => {
   };
 
   const handleInterestsChange = (e) => {
-    const interests = e.target.value.split(',').map(interest => interest.trim());
+    const interests = e.target.value.split(',').map(interest => interest.trim()).filter(interest => interest);
     setEditData({
       ...editData,
       interests: interests
     });
   };
 
-  const handleSave = () => {
-    setProfileData({...editData});
-    setIsEditing(false);
+  const handleSave = async () => {
+    try {
+      setSaving(true);
+      setError('');
+      
+      // Prepare data for API
+      const updateData = {
+        firstName: editData.firstName,
+        lastName: editData.lastName,
+        phone: editData.phone,
+        bio: editData.bio,
+        university: editData.university,
+        degree: editData.degree,
+        major: editData.major,
+        currentSemester: editData.currentSemester,
+        graduationYear: editData.graduationYear,
+        location: editData.location,
+        dateOfBirth: editData.dateOfBirth,
+        linkedin: editData.linkedin,
+        github: editData.github,
+        skills: editData.skills,
+        interests: editData.interests
+      };
+      
+      const response = await userAPI.updateProfile(updateData);
+      
+      if (response.success) {
+        setProfileData({...editData});
+        setIsEditing(false);
+        alert('Profile updated successfully!');
+      } else {
+        setError(response.message || 'Failed to update profile');
+      }
+    } catch (error) {
+      console.error('Error updating profile:', error);
+      setError('Failed to update profile. Please try again.');
+    } finally {
+      setSaving(false);
+    }
   };
 
   const handleCancel = () => {
     setEditData({...profileData});
     setIsEditing(false);
+    setError('');
   };
 
   const calculateProgress = () => {
@@ -93,14 +192,57 @@ const Profile = () => {
     return 'Student';
   };
 
+  if (loading) {
+    return (
+      <div className="profile-layout">
+        <SideBar/>
+        <main className="main-content">
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <h2>Loading profile...</h2>
+            <p>Please wait while we fetch your information</p>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
+  if (error && !profileData.email) {
+    return (
+      <div className="profile-layout">
+        <SideBar/>
+        <main className="main-content">
+          <div style={{ textAlign: 'center', padding: '50px' }}>
+            <h2>Error</h2>
+            <p style={{ color: 'red' }}>{error}</p>
+            <button onClick={fetchProfile} style={{ padding: '10px 20px', marginTop: '20px' }}>
+              Retry
+            </button>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="profile-layout">
-      
       <SideBar/>
 
       {/* Main Content */}
       <main className="main-content">
         <div className="profile-container">
+          
+          {/* Error message */}
+          {error && (
+            <div style={{ 
+              backgroundColor: '#fee', 
+              color: '#c33', 
+              padding: '10px', 
+              borderRadius: '5px', 
+              marginBottom: '20px' 
+            }}>
+              {error}
+            </div>
+          )}
           
           {/* Profile Header */}
           <div className="profile-header">
@@ -119,7 +261,7 @@ const Profile = () => {
                 <p className="profile-status">{getStudentStatus()} • {profileData.major}</p>
                 <p className="profile-university">{profileData.university}</p>
                 <div className="profile-location">
-                  <FaMapMarkerAlt /> {profileData.location}
+                  <FaMapMarkerAlt /> {profileData.location || 'Location not set'}
                 </div>
               </div>
               
@@ -127,6 +269,7 @@ const Profile = () => {
                 <button 
                   className="btn-edit"
                   onClick={() => setIsEditing(!isEditing)}
+                  disabled={saving}
                 >
                   <FaEdit /> {isEditing ? 'Cancel Edit' : 'Edit Profile'}
                 </button>
@@ -137,8 +280,8 @@ const Profile = () => {
             <div className="academic-progress">
               <h3>Academic Progress</h3>
               <div className="progress-info">
-                <span>Current: {profileData.currentSemester}</span>
-                <span>Graduation: {profileData.graduationYear}</span>
+                <span>Current: {profileData.currentSemester || 'Not set'}</span>
+                <span>Graduation: {profileData.graduationYear || 'Not set'}</span>
               </div>
               <div className="progress-bar">
                 <div 
@@ -189,7 +332,7 @@ const Profile = () => {
                       placeholder="Tell us about yourself..."
                     />
                   ) : (
-                    <p>{profileData.bio}</p>
+                    <p>{profileData.bio || 'No bio added yet. Click "Edit Profile" to add one!'}</p>
                   )}
                 </div>
 
@@ -204,9 +347,12 @@ const Profile = () => {
                     />
                   ) : (
                     <div className="skills-list">
-                      {profileData.skills.map((skill, index) => (
-                        <span key={index} className="skill-tag">{skill}</span>
-                      ))}
+                      {profileData.skills && profileData.skills.length > 0 
+                        ? profileData.skills.map((skill, index) => (
+                            <span key={index} className="skill-tag">{skill}</span>
+                          ))
+                        : <p>No skills added yet. Click "Edit Profile" to add them!</p>
+                      }
                     </div>
                   )}
                 </div>
@@ -222,9 +368,12 @@ const Profile = () => {
                     />
                   ) : (
                     <div className="interests-list">
-                      {profileData.interests.map((interest, index) => (
-                        <span key={index} className="interest-tag">{interest}</span>
-                      ))}
+                      {profileData.interests && profileData.interests.length > 0
+                        ? profileData.interests.map((interest, index) => (
+                            <span key={index} className="interest-tag">{interest}</span>
+                          ))
+                        : <p>No interests added yet. Click "Edit Profile" to add them!</p>
+                      }
                     </div>
                   )}
                 </div>
@@ -247,7 +396,7 @@ const Profile = () => {
                           onChange={handleInputChange}
                         />
                       ) : (
-                        <span>{profileData.university}</span>
+                        <span>{profileData.university || 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -258,6 +407,7 @@ const Profile = () => {
                           value={editData.degree}
                           onChange={handleInputChange}
                         >
+                          <option value="">Select degree</option>
                           <option value="Bachelor of Technology">Bachelor of Technology</option>
                           <option value="Bachelor of Science">Bachelor of Science</option>
                           <option value="Bachelor of Engineering">Bachelor of Engineering</option>
@@ -265,7 +415,7 @@ const Profile = () => {
                           <option value="Master of Science">Master of Science</option>
                         </select>
                       ) : (
-                        <span>{profileData.degree}</span>
+                        <span>{profileData.degree || 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -276,6 +426,7 @@ const Profile = () => {
                           value={editData.major}
                           onChange={handleInputChange}
                         >
+                          <option value="">Select major</option>
                           <option value="Computer Science">Computer Science</option>
                           <option value="Information Technology">Information Technology</option>
                           <option value="Software Engineering">Software Engineering</option>
@@ -283,7 +434,7 @@ const Profile = () => {
                           <option value="Mechanical Engineering">Mechanical Engineering</option>
                         </select>
                       ) : (
-                        <span>{profileData.major}</span>
+                        <span>{profileData.major || 'Not set'}</span>
                       )}
                     </div>
                   </div>
@@ -298,6 +449,7 @@ const Profile = () => {
                           value={editData.currentSemester}
                           onChange={handleInputChange}
                         >
+                          <option value="">Select semester</option>
                           <option value="1/1">1st Year, 1st Semester</option>
                           <option value="1/2">1st Year, 2nd Semester</option>
                           <option value="2/1">2nd Year, 1st Semester</option>
@@ -308,7 +460,7 @@ const Profile = () => {
                           <option value="4/2">4th Year, 2nd Semester</option>
                         </select>
                       ) : (
-                        <span>{profileData.currentSemester}</span>
+                        <span>{profileData.currentSemester || 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -319,9 +471,10 @@ const Profile = () => {
                           name="graduationYear"
                           value={editData.graduationYear}
                           onChange={handleInputChange}
+                          placeholder="e.g., 2025"
                         />
                       ) : (
-                        <span>{profileData.graduationYear}</span>
+                        <span>{profileData.graduationYear || 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -375,7 +528,7 @@ const Profile = () => {
                           onChange={handleInputChange}
                         />
                       ) : (
-                        <span>{new Date(profileData.dateOfBirth).toLocaleDateString()}</span>
+                        <span>{profileData.dateOfBirth ? new Date(profileData.dateOfBirth).toLocaleDateString() : 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -386,9 +539,10 @@ const Profile = () => {
                           name="location"
                           value={editData.location}
                           onChange={handleInputChange}
+                          placeholder="City, Country"
                         />
                       ) : (
-                        <span>{profileData.location}</span>
+                        <span>{profileData.location || 'Not set'}</span>
                       )}
                     </div>
                   </div>
@@ -397,16 +551,8 @@ const Profile = () => {
                     <h3>Contact & Social</h3>
                     <div className="info-field">
                       <label><FaEnvelope /> Email</label>
-                      {isEditing ? (
-                        <input
-                          type="email"
-                          name="email"
-                          value={editData.email}
-                          onChange={handleInputChange}
-                        />
-                      ) : (
-                        <span>{profileData.email}</span>
-                      )}
+                      <span>{profileData.email}</span>
+                      <small style={{ color: '#666', display: 'block' }}>Email cannot be changed</small>
                     </div>
                     <div className="info-field">
                       <label><FaPhone /> Phone</label>
@@ -416,9 +562,10 @@ const Profile = () => {
                           name="phone"
                           value={editData.phone}
                           onChange={handleInputChange}
+                          placeholder="+1 (555) 123-4567"
                         />
                       ) : (
-                        <span>{profileData.phone}</span>
+                        <span>{profileData.phone || 'Not set'}</span>
                       )}
                     </div>
                     <div className="info-field">
@@ -429,11 +576,16 @@ const Profile = () => {
                           name="linkedin"
                           value={editData.linkedin}
                           onChange={handleInputChange}
+                          placeholder="linkedin.com/in/yourprofile"
                         />
                       ) : (
-                        <a href={`https://${profileData.linkedin}`} target="_blank" rel="noopener noreferrer">
-                          {profileData.linkedin}
-                        </a>
+                        profileData.linkedin ? (
+                          <a href={`https://${profileData.linkedin}`} target="_blank" rel="noopener noreferrer">
+                            {profileData.linkedin}
+                          </a>
+                        ) : (
+                          <span>Not set</span>
+                        )
                       )}
                     </div>
                     <div className="info-field">
@@ -444,11 +596,16 @@ const Profile = () => {
                           name="github"
                           value={editData.github}
                           onChange={handleInputChange}
+                          placeholder="github.com/yourprofile"
                         />
                       ) : (
-                        <a href={`https://${profileData.github}`} target="_blank" rel="noopener noreferrer">
-                          {profileData.github}
-                        </a>
+                        profileData.github ? (
+                          <a href={`https://${profileData.github}`} target="_blank" rel="noopener noreferrer">
+                            {profileData.github}
+                          </a>
+                        ) : (
+                          <span>Not set</span>
+                        )
                       )}
                     </div>
                   </div>
@@ -460,10 +617,18 @@ const Profile = () => {
           {/* Save/Cancel buttons when editing */}
           {isEditing && (
             <div className="edit-actions">
-              <button className="btn-save" onClick={handleSave}>
-                <FaSave /> Save Changes
+              <button 
+                className="btn-save" 
+                onClick={handleSave}
+                disabled={saving}
+              >
+                <FaSave /> {saving ? 'Saving...' : 'Save Changes'}
               </button>
-              <button className="btn-cancel" onClick={handleCancel}>
+              <button 
+                className="btn-cancel" 
+                onClick={handleCancel}
+                disabled={saving}
+              >
                 <FaTimes /> Cancel
               </button>
             </div>
