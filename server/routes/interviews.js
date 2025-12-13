@@ -118,16 +118,17 @@ router.post('/', auth, async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const { id } = req.params;
+        let cleanId = id.substring(1);
         
         // Update view count
-        await db.execute('UPDATE interviews SET views = views + 1 WHERE id = ?', [id]);
+        await db.execute('UPDATE interviews SET views = views + 1 WHERE id = ?', [cleanId]);
         
         const [interviews] = await db.execute(
             `SELECT i.*, u.first_name, u.last_name, u.profile_image
              FROM interviews i
              JOIN users u ON i.user_id = u.id
              WHERE i.id = ?`,
-            [id]
+            [cleanId]
         );
         
         if (interviews.length === 0) {
@@ -141,8 +142,49 @@ router.get('/:id', async (req, res) => {
              JOIN users u ON c.user_id = u.id
              WHERE c.post_id = ? AND c.post_type = 'interview'
              ORDER BY c.created_at ASC`,
-            [id]
+            [cleanId]
         );
+        
+        res.json({
+            success: true,
+            data: {
+                interview: interviews[0],
+                comments
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
+    }
+});
+
+// Get single interview (add this if not already present)
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+        
+        // Update view count
+        await db.execute('UPDATE interviews SET views = views + 1 WHERE id = ?', [id]);
+        
+        const [interviews] = await db.execute(`
+            SELECT i.*, u.first_name, u.last_name, u.profile_image
+            FROM interviews i
+            JOIN users u ON i.user_id = u.id
+            WHERE i.id = ?
+        `, [id]);
+        
+        if (interviews.length === 0) {
+            return res.status(404).json({ message: 'Interview experience not found' });
+        }
+        
+        // Get comments
+        const [comments] = await db.execute(`
+            SELECT c.*, u.first_name, u.last_name, u.profile_image
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.post_id = ? AND c.post_type = 'interview'
+            ORDER BY c.created_at ASC
+        `, [id]);
         
         res.json({
             success: true,

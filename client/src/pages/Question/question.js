@@ -194,6 +194,7 @@ function Question() {
               </Link>
             </div>
           ) : (
+            // Replace the questions.map section with this
             questions.map((question) => (
               <article key={question.id} className="question-card">
                 <div className="card-content">
@@ -204,12 +205,18 @@ function Question() {
                       {question.first_name} {question.last_name}
                     </Link>
                   </div>
-                  <h2 className="card-title">{question.title}</h2>
+                  <Link to={`/:question/:${question.id}`} className="card-title-link">
+                    <h2 className="card-title">{question.title}</h2>
+                  </Link>
                   <p className="card-excerpt">
                     {question.content.length > 200 
                       ? `${question.content.substring(0, 200)}...` 
                       : question.content}
                   </p>
+                  
+                  <Link to={`/:question/:${question.id}`} className="read-more-btn">
+                    Read Full Question →
+                  </Link>
 
                   <div className="card-stats">
                     <span className="stat-item">
@@ -227,10 +234,12 @@ function Question() {
                   </div>
                 </div>
                 <div className="card-image">
-                  <img 
-                    src={`https://via.placeholder.com/300x200/28a745/ffffff?text=${encodeURIComponent(question.topic)}`}
-                    alt={`${question.topic} question`} 
-                  />
+                  <Link to={`/question/${question.id}`}>
+                    <img 
+                      src={`https://via.placeholder.com/300x200/28a745/ffffff?text=${encodeURIComponent(question.topic)}`}
+                      alt={`${question.topic} question`} 
+                    />
+                  </Link>
                 </div>
               </article>
             ))

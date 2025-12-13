@@ -9,6 +9,8 @@ import Write from "./pages/Write/write";
 import Signin from "./pages/Signin/signin";
 import Signup from "./pages/Signup/signup";
 import Profile from "./pages/Profile/profile";
+import PostDetail from './components/PostDetail/postDetail';
+
 
 function App() {
   return (
@@ -23,6 +25,8 @@ function App() {
           <Route path="/signin" element={<Signin />} />
           <Route path="/signup" element={<Signup />} />
           <Route path="/profile" element={<Profile />} />
+          <Route path="/:type/:id" element={<PostDetail />} />
+          {/* <Route path="/:interview/:id" element={<PostDetail />} /> */}
         </Routes>
       </div>
       <Footer />

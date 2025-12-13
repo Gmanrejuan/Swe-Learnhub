@@ -186,71 +186,80 @@ function Interview() {
               </Link>
             </div>
           ) : (
-            interviews.map((interview) => (
-              <article key={interview.id} className="interview-card">
-                <div className="card-content">
-                  <div className="card-meta">
-                    <Link to="#" className="meta-category">Interview Experience</Link> 
-                    <span className="meta-separator">by</span> 
-                    <Link to="#" className="meta-author">
-                      {interview.first_name} {interview.last_name}
+            // Replace the interviews.map section with this
+              interviews.map((interview) => (
+                <article key={interview.id} className="interview-card">
+                  <div className="card-content">
+                    <div className="card-meta">
+                      <Link to="#" className="meta-category">Interview Experience</Link> 
+                      <span className="meta-separator">by</span> 
+                      <Link to="#" className="meta-author">
+                        {interview.first_name} {interview.last_name}
+                      </Link>
+                      <span 
+                        className="result-badge"
+                        style={{
+                          ...getResultBadgeStyle(interview.result),
+                          padding: '4px 8px',
+                          borderRadius: '12px',
+                          fontSize: '12px',
+                          fontWeight: '500',
+                          marginLeft: '10px'
+                        }}
+                      >
+                        {interview.result}
+                      </span>
+                    </div>
+                    <Link to={`/:interview/:${interview.id}`} className="card-title-link">
+                      <h2 className="card-title">{interview.title}</h2>
                     </Link>
-                    <span 
-                      className="result-badge"
-                      style={{
-                        ...getResultBadgeStyle(interview.result),
-                        padding: '4px 8px',
-                        borderRadius: '12px',
-                        fontSize: '12px',
-                        fontWeight: '500',
-                        marginLeft: '10px'
-                      }}
-                    >
-                      {interview.result}
-                    </span>
-                  </div>
-                  <h2 className="card-title">{interview.title}</h2>
-                  <p className="card-excerpt">
-                    {interview.content.length > 200 
-                      ? `${interview.content.substring(0, 200)}...` 
-                      : interview.content}
-                  </p>
+                    <p className="card-excerpt">
+                      {interview.content.length > 200 
+                        ? `${interview.content.substring(0, 200)}...` 
+                        : interview.content}
+                    </p>
 
-                  <div className="interview-details" style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>
-                    <span><strong>Position:</strong> {interview.position}</span>
-                    <span style={{ margin: '0 10px' }}>|</span>
-                    <span><strong>Location:</strong> {interview.location_type}</span>
-                    {interview.tags && (
-                      <>
-                        <span style={{ margin: '0 10px' }}>|</span>
-                        <span><strong>Tags:</strong> {interview.tags}</span>
-                      </>
-                    )}
-                  </div>
+                    <div className="interview-details" style={{ margin: '10px 0', fontSize: '14px', color: '#666' }}>
+                      <span><strong>Position:</strong> {interview.position}</span>
+                      <span style={{ margin: '0 10px' }}>|</span>
+                      <span><strong>Location:</strong> {interview.location_type}</span>
+                      {interview.tags && (
+                        <>
+                          <span style={{ margin: '0 10px' }}>|</span>
+                          <span><strong>Tags:</strong> {interview.tags}</span>
+                        </>
+                      )}
+                    </div>
+                    
+                    <Link to={`/:interview/:${interview.id}`} className="read-more-btn">
+                      Read Full Experience →
+                    </Link>
 
-                  <div className="card-stats">
-                    <span className="stat-item">
-                      <BsCalendarDate className="stat-icon" /> {formatDate(interview.created_at)}
-                    </span>
-                    <span className="stat-item">
-                      <FaBuilding className="stat-icon" /> {interview.company}
-                    </span>
-                    <span className="stat-item">
-                      <AiFillLike className="stat-icon" /> {interview.likes}
-                    </span>
-                    <span className="stat-item">
-                      <FaComment className="stat-icon" /> {interview.comment_count}
-                    </span>
+                    <div className="card-stats">
+                      <span className="stat-item">
+                        <BsCalendarDate className="stat-icon" /> {formatDate(interview.created_at)}
+                      </span>
+                      <span className="stat-item">
+                        <FaBuilding className="stat-icon" /> {interview.company}
+                      </span>
+                      <span className="stat-item">
+                        <AiFillLike className="stat-icon" /> {interview.likes}
+                      </span>
+                      <span className="stat-item">
+                        <FaComment className="stat-icon" /> {interview.comment_count}
+                      </span>
+                    </div>
                   </div>
-                </div>
-                <div className="card-image">
-                  <img 
-                    src={`https://via.placeholder.com/300x200/1877f2/ffffff?text=${encodeURIComponent(interview.company)}`}
-                    alt={`${interview.company} interview experience`} 
-                  />
-                </div>
-              </article>
-            ))
+                  <div className="card-image">
+                    <Link to={`/interview/${interview.id}`}>
+                      <img 
+                        src={`https://via.placeholder.com/300x200/1877f2/ffffff?text=${encodeURIComponent(interview.company)}`}
+                        alt={`${interview.company} interview experience`} 
+                      />
+                    </Link>
+                  </div>
+                </article>
+              ))
           )}
         </div>
       </main>

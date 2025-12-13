@@ -58,45 +58,51 @@ function Home() {
     });
   };
 
-  // Render individual post
-  const renderPost = (post, index) => {
-    const isQuestion = post.type === 'question';
-    
-    return (
-      <ul key={`${post.type}-${post.id}`}>
-        <li>
-          <div className="text-box">
-            <p>
-              <Link to="#" className="category-link">
-                {isQuestion ? `${post.topic} Question` : 'Interview Experience'}
-              </Link> by{' '}
-              <Link to="#" className="author-link">
-                {post.first_name} {post.last_name}
-              </Link>
-            </p>
+const renderPost = (post, index) => {
+  const isQuestion = post.type === 'question';
+  
+  return (
+    <ul key={`${post.type}-${post.id}`}>
+      <li>
+        <div className="text-box">
+          <p>
+            <Link to="#" className="category-link">
+              {isQuestion ? `${post.topic} Question` : 'Interview Experience'}
+            </Link> by{' '}
+            <Link to="#" className="author-link">
+              {post.first_name} {post.last_name}
+            </Link>
+          </p>
+          <Link to={`/:${post.type}/:${post.id}`} className="post-link">
             <h1>{post.title}</h1>
-            <p>{post.content.length > 200 ? `${post.content.substring(0, 200)}...` : post.content}</p>
+          </Link>
+          <p>{post.content.length > 200 ? `${post.content.substring(0, 200)}...` : post.content}</p>
+          
+          <Link to={`/:${post.type}/:${post.id}`} className="read-more-btn">
+            Read Full Post →
+          </Link>
 
-            <div className="post-meta">
-              <span className="meta-item">
-                <BsCalendarDate /> {formatDate(post.created_at)}
-              </span>
-              <span className="meta-item">
-                {isQuestion ? (
-                  <><FaGraduationCap /> {post.semester}/{post.academic_year}</>
-                ) : (
-                  <><FaBuilding /> {post.company}</>
-                )}
-              </span>
-              <span className="meta-item">
-                <AiFillLike /> {post.likes}
-              </span>
-              <span className="meta-item">
-                <FaComment /> {post.comment_count}
-              </span>
-            </div>
+          <div className="post-meta">
+            <span className="meta-item">
+              <BsCalendarDate /> {formatDate(post.created_at)}
+            </span>
+            <span className="meta-item">
+              {isQuestion ? (
+                <><FaGraduationCap /> {post.semester}/{post.academic_year}</>
+              ) : (
+                <><FaBuilding /> {post.company}</>
+              )}
+            </span>
+            <span className="meta-item">
+              <AiFillLike /> {post.likes}
+            </span>
+            <span className="meta-item">
+              <FaComment /> {post.comment_count}
+            </span>
           </div>
-          <div className="img-box">
+        </div>
+        <div className="img-box">
+          <Link to={`/${post.type}/${post.id}`}>
             <img 
               src={isQuestion 
                 ? `https://via.placeholder.com/300x200/28a745/ffffff?text=${encodeURIComponent(post.topic)}`
@@ -104,11 +110,12 @@ function Home() {
               } 
               alt={isQuestion ? post.topic : `${post.company} Interview`} 
             />
-          </div>
-        </li>
-      </ul>
-    );
-  };
+          </Link>
+        </div>
+      </li>
+    </ul>
+  );
+};
 
   if (loading) {
     return (

@@ -42,6 +42,12 @@ export const questionsAPI = {
             body: JSON.stringify(questionData)
         });
         return response.json();
+    },
+
+    getQuestion: async (id) => {
+        console.log(`${API_BASE_URL}/questions/${id}`);
+        const response = await fetch(`${API_BASE_URL}/questions/${id}`);
+        return response.json();
     }
 };
 
@@ -62,6 +68,11 @@ export const interviewsAPI = {
             },
             body: JSON.stringify(interviewData)
         });
+        return response.json();
+    },
+
+    getInterview: async (id) => {
+        const response = await fetch(`${API_BASE_URL}/interviews/${id}`);
         return response.json();
     }
 };
@@ -125,3 +136,5 @@ export const userAPI = {
         return response.json();
     }
 };
+
+

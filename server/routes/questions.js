@@ -17,7 +17,7 @@ router.get('/', async (req, res) => {
             JOIN users u ON q.user_id = u.id
             LEFT JOIN comments c ON q.id = c.post_id AND c.post_type = 'question'
         `;
-        
+
         let params = [];
         let whereConditions = [];
         
@@ -147,6 +147,49 @@ router.post('/', auth, async (req, res) => {
     } catch (error) {
         console.error(error);
         res.status(500).json({ message: 'Server error', error: error.message });
+    }
+});
+
+// Add this route to get single question
+router.get('/:id', async (req, res) => {
+    try {
+        const { id } = req.params;
+
+        let cleanId = id.substring(1);
+        
+        // Update view count
+        await db.execute('UPDATE questions SET views = views + 1 WHERE id = ?', [cleanId]);
+        
+        const [questions] = await db.execute(`
+            SELECT q.*, u.first_name, u.last_name, u.profile_image
+            FROM questions q
+            JOIN users u ON q.user_id = u.id
+            WHERE q.id = ?
+        `, [cleanId]);
+        
+        if (questions.length === 0) {
+            return res.status(404).json({ message: 'Question not found' });
+        }
+        
+        // Get comments
+        const [comments] = await db.execute(`
+            SELECT c.*, u.first_name, u.last_name, u.profile_image
+            FROM comments c
+            JOIN users u ON c.user_id = u.id
+            WHERE c.post_id = ? AND c.post_type = 'question'
+            ORDER BY c.created_at ASC
+        `, [cleanId]);
+        
+        res.json({
+            success: true,
+            data: {
+                question: questions[0],
+                comments
+            }
+        });
+    } catch (error) {
+        console.error(error);
+        res.status(500).json({ message: 'Server error' });
     }
 });
 

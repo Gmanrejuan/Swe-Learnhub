@@ -263,6 +263,40 @@
   color: #8e8e8e;
 }
 
+/* Add these styles to home.css, question.css, and interview.css */
+.post-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.post-link:hover h1 {
+  color: #1877f2;
+  transition: color 0.2s;
+}
+
+.card-title-link {
+  text-decoration: none;
+  color: inherit;
+}
+
+.card-title-link:hover .card-title {
+  color: #1877f2;
+  transition: color 0.2s;
+}
+
+.read-more-btn {
+  display: inline-block;
+  margin: 10px 0;
+  color: #1877f2;
+  text-decoration: none;
+  font-weight: 500;
+  font-size: 14px;
+}
+
+.read-more-btn:hover {
+  text-decoration: underline;
+}
+
 /* Responsive Design */
 @media (max-width: 1024px) {
   .sidebar-right {
