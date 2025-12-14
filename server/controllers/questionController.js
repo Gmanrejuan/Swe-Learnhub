@@ -1,121 +1,64 @@
 const db = require('../config/database');
 
 // Get all questions
-exports.getQuestions = async (req, res) => {
+exports.getAllQuestions = async (req, res) => {
     try {
-        const { semester, topic, page = 1, limit = 10 } = req.query;
+        const page = parseInt(req.query.page) || 1;
+        const limit = parseInt(req.query.limit) || 10;
         const offset = (page - 1) * limit;
-        
-        let query = `
-            SELECT q.*, u.first_name, u.last_name, u.profile_image,
-                   COUNT(c.id) as comment_count
-            FROM questions q
-            JOIN users u ON q.user_id = u.id
-            LEFT JOIN comments c ON q.id = c.post_id AND c.post_type = 'question'
-        `;
-        
+        const { semester, topic } = req.query;
+
+        let query = 'SELECT q.*, u.first_name, u.last_name, u.profile_image FROM questions q JOIN users u ON q.user_id = u.id';
         let params = [];
-        let whereConditions = [];
-        
+
         if (semester) {
-            whereConditions.push('q.semester = ?');
+            query += ' WHERE q.semester = ?';
             params.push(semester);
         }
-        
         if (topic) {
-            whereConditions.push('q.topic = ?');
+            query += params.length > 0 ? ' AND q.topic = ?' : ' WHERE q.topic = ?';
             params.push(topic);
         }
-        
-        if (whereConditions.length > 0) {
-            query += ' WHERE ' + whereConditions.join(' AND ');
-        }
-        
-        query += `
-            GROUP BY q.id
-            ORDER BY q.created_at DESC
-            LIMIT ? OFFSET ?
-        `;
-        
-        params.push(parseInt(limit), parseInt(offset));
-        
+
+        query += ' ORDER BY q.created_at DESC LIMIT ' + limit + ' OFFSET ' + offset;
+
         const [questions] = await db.execute(query, params);
-        
+
         res.json({
             success: true,
             data: questions,
-            pagination: {
-                page: parseInt(page),
-                limit: parseInt(limit),
-                total: questions.length
-            }
+            pagination: { page, limit, total: questions.length }
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
-    }
-};
-
-// Create new question
-exports.createQuestion = async (req, res) => {
-    try {
-        const { title, content, semester, year, topic } = req.body;
-        const userId = req.user.id;
-        
-        const [result] = await db.execute(
-            `INSERT INTO questions (user_id, title, content, semester, academic_year, topic)
-             VALUES (?, ?, ?, ?, ?, ?)`,
-            [userId, title, content, semester, year, topic]
-        );
-        
-        const [newQuestion] = await db.execute(
-            `SELECT q.*, u.first_name, u.last_name
-             FROM questions q
-             JOIN users u ON q.user_id = u.id
-             WHERE q.id = ?`,
-            [result.insertId]
-        );
-        
-        res.status(201).json({
-            success: true,
-            data: newQuestion[0]
-        });
-    } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching questions' });
     }
 };
 
 // Get single question
-exports.getQuestion = async (req, res) => {
+exports.getQuestionById = async (req, res) => {
     try {
         const { id } = req.params;
-        
-        // Update view count
+
+        // Update views
         await db.execute('UPDATE questions SET views = views + 1 WHERE id = ?', [id]);
-        
+
+        // Get question
         const [questions] = await db.execute(
-            `SELECT q.*, u.first_name, u.last_name, u.profile_image
-             FROM questions q
-             JOIN users u ON q.user_id = u.id
-             WHERE q.id = ?`,
+            'SELECT q.*, u.first_name, u.last_name, u.profile_image FROM questions q JOIN users u ON q.user_id = u.id WHERE q.id = ?',
             [id]
         );
-        
+
         if (questions.length === 0) {
-            return res.status(404).json({ message: 'Question not found' });
+            return res.status(404).json({ success: false, message: 'Question not found' });
         }
-        
+
         // Get comments
         const [comments] = await db.execute(
-            `SELECT c.*, u.first_name, u.last_name, u.profile_image
-             FROM comments c
-             JOIN users u ON c.user_id = u.id
-             WHERE c.post_id = ? AND c.post_type = 'question'
-             ORDER BY c.created_at ASC`,
-            [id]
+            'SELECT c.*, u.first_name, u.last_name FROM comments c JOIN users u ON c.user_id = u.id WHERE c.post_id = ? AND c.post_type = ? ORDER BY c.created_at DESC',
+            [id, 'question']
         );
-        
+
         res.json({
             success: true,
             data: {
@@ -124,41 +67,108 @@ exports.getQuestion = async (req, res) => {
             }
         });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error fetching question' });
     }
 };
 
-// Like/Unlike question
+// Create question
+exports.createQuestion = async (req, res) => {
+    try {
+        const { title, content, semester, academic_year, topic } = req.body;
+        const userId = req.user.id;
+
+        const [result] = await db.execute(
+            'INSERT INTO questions (user_id, title, content, semester, academic_year, topic, likes, views) VALUES (?, ?, ?, ?, ?, ?, 0, 0)',
+            [userId, title, content, semester, academic_year, topic]
+        );
+
+        const [newQuestion] = await db.execute(
+            'SELECT q.*, u.first_name, u.last_name FROM questions q JOIN users u ON q.user_id = u.id WHERE q.id = ?',
+            [result.insertId]
+        );
+
+        res.status(201).json({
+            success: true,
+            message: 'Question created',
+            data: newQuestion[0]
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error creating question' });
+    }
+};
+
+// Update question
+exports.updateQuestion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const { title, content, topic } = req.body;
+        const userId = req.user.id;
+
+        await db.execute(
+            'UPDATE questions SET title = ?, content = ?, topic = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ? AND user_id = ?',
+            [title, content, topic, id, userId]
+        );
+
+        const [updatedQuestion] = await db.execute(
+            'SELECT q.*, u.first_name, u.last_name FROM questions q JOIN users u ON q.user_id = u.id WHERE q.id = ?',
+            [id]
+        );
+
+        res.json({
+            success: true,
+            message: 'Question updated',
+            data: updatedQuestion[0]
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error updating question' });
+    }
+};
+
+// Delete question
+exports.deleteQuestion = async (req, res) => {
+    try {
+        const { id } = req.params;
+        const userId = req.user.id;
+
+        await db.execute('DELETE FROM comments WHERE post_id = ? AND post_type = ?', [id, 'question']);
+        await db.execute('DELETE FROM likes WHERE post_id = ? AND post_type = ?', [id, 'question']);
+        await db.execute('DELETE FROM questions WHERE id = ? AND user_id = ?', [id, userId]);
+
+        res.json({
+            success: true,
+            message: 'Question deleted'
+        });
+    } catch (error) {
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error deleting question' });
+    }
+};
+
+// Toggle like
 exports.toggleLike = async (req, res) => {
     try {
         const { id } = req.params;
         const userId = req.user.id;
-        
+
         const [existingLike] = await db.execute(
-            'SELECT id FROM likes WHERE user_id = ? AND post_id = ? AND post_type = "question"',
-            [userId, id]
+            'SELECT id FROM likes WHERE user_id = ? AND post_id = ? AND post_type = ?',
+            [userId, id, 'question']
         );
-        
+
         if (existingLike.length > 0) {
-            // Unlike
-            await db.execute(
-                'DELETE FROM likes WHERE user_id = ? AND post_id = ? AND post_type = "question"',
-                [userId, id]
-            );
+            await db.execute('DELETE FROM likes WHERE user_id = ? AND post_id = ? AND post_type = ?', [userId, id, 'question']);
             await db.execute('UPDATE questions SET likes = likes - 1 WHERE id = ?', [id]);
         } else {
-            // Like
-            await db.execute(
-                'INSERT INTO likes (user_id, post_id, post_type) VALUES (?, ?, "question")',
-                [userId, id]
-            );
+            await db.execute('INSERT INTO likes (user_id, post_id, post_type) VALUES (?, ?, ?)', [userId, id, 'question']);
             await db.execute('UPDATE questions SET likes = likes + 1 WHERE id = ?', [id]);
         }
-        
-        res.json({ success: true });
+
+        res.json({ success: true, message: 'Like toggled' });
     } catch (error) {
-        console.error(error);
-        res.status(500).json({ message: 'Server error' });
+        console.error('Error:', error);
+        res.status(500).json({ success: false, message: 'Error toggling like' });
     }
 };

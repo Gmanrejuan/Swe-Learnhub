@@ -44,23 +44,25 @@ router.put('/profile', auth, async (req, res) => {
         const userId = req.user.id;
         const {
             firstName, lastName, phone, bio, university, degree, major,
-            currentSemester, graduationYear
+            currentSemester, graduationYear, skills, interests
         } = req.body;
         
         // Convert arrays to JSON strings
-        const skillsJson = Array.isArray(skills) ? JSON.stringify(skills) : skills;
-        const interestsJson = Array.isArray(interests) ? JSON.stringify(interests) : interests;
+        const skillsJson = Array.isArray(skills) ? JSON.stringify(skills) : skills || '[]';
+        const interestsJson = Array.isArray(interests) ? JSON.stringify(interests) : interests || '[]';
         
         const [result] = await db.execute(`
             UPDATE users SET 
-                first_name = ?, last_name = ?,  bio = ?, 
+                first_name = ?, last_name = ?, bio = ?, 
                 university = ?, degree = ?, major = ?, current_semester = ?,
-                graduation_year = ?, 
+                graduation_year = ?, skills = ?, interests = ?,
                 updated_at = CURRENT_TIMESTAMP
             WHERE id = ?
         `, [
-            firstName, lastName,  bio, university, degree, major,
-            currentSemester, graduationYear, userId
+            firstName || null, lastName || null, bio || null, 
+            university || null, degree || null, major || null,
+            currentSemester || null, graduationYear || null, 
+            skillsJson, interestsJson, userId
         ]);
         
         if (result.affectedRows === 0) {

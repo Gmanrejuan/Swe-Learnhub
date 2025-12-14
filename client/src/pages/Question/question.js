@@ -205,7 +205,7 @@ function Question() {
                       {question.first_name} {question.last_name}
                     </Link>
                   </div>
-                  <Link to={`/:question/:${question.id}`} className="card-title-link">
+                  <Link to={`/question/${question.id}`} className="card-title-link">
                     <h2 className="card-title">{question.title}</h2>
                   </Link>
                   <p className="card-excerpt">
@@ -214,7 +214,7 @@ function Question() {
                       : question.content}
                   </p>
                   
-                  <Link to={`/:question/:${question.id}`} className="read-more-btn">
+                  <Link to={`/question/${question.id}`} className="read-more-btn">
                     Read Full Question →
                   </Link>
 

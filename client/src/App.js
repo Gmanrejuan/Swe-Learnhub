@@ -7,7 +7,7 @@ import Interview from "./pages/Interview/interview"
 import Question from "./pages/Question/question";
 import Write from "./pages/Write/write";
 import Signin from "./pages/Signin/signin";
-import Signup from "./pages/Signup/signup";
+import Signup from "./pages/Signup/Signup";
 import Profile from "./pages/Profile/profile";
 import PostDetail from './components/PostDetail/postDetail';
 
